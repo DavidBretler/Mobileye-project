@@ -89,7 +89,7 @@ def find_tfl_lights(c_image: np.ndarray, cv2=None, **kwargs):
     # lst_index = [lst[2] for x in lst]
     # lst_indey = [lst[1] for x in lst]
     # lst = n_max(lst_index2, 3)
-    # plt.imshow(x)
+    # # plt.imshow(x)
     # plt.show()
 
 
@@ -111,12 +111,12 @@ def find_tfl_lights(c_image: np.ndarray, cv2=None, **kwargs):
 
     ax = plt.subplot(2, 1, 1)
     ax.set_title("Before")
-    plt.imshow(fixed_image)
+    # plt.imshow(fixed_image)
 
 
     max_filter_image = scipy.ndimage.maximum_filter(fixed_image, 50)
-    plt.imshow(max_filter_image)
-    plt.show()
+    # plt.imshow(max_filter_image)
+    # plt.show()
     lst_index1 = []
     lst_index2 = []
 
@@ -132,13 +132,13 @@ def find_tfl_lights(c_image: np.ndarray, cv2=None, **kwargs):
 
 ### GIVEN CODE TO TEST YOUR IMPLENTATION AND PLOT THE PICTURES
 def show_image_and_gt(image, objs, fig_num=None):
-    plt.figure(fig_num).clf()
-    plt.imshow(image)
+    # plt.figure(fig_num).clf()
+    # plt.imshow(image)
     labels = set()
     if objs is not None:
         for o in objs:
             poly = np.array(o['polygon'])[list(np.arange(len(o['polygon']))) + [0]]
-            plt.plot(poly[:, 0], poly[:, 1], 'r', label=o['label'])
+            # plt.plot(poly[:, 0], poly[:, 1], 'r', label=o['label'])
             labels.add(o['label'])
         if len(labels) > 1:
             plt.legend()
@@ -162,9 +162,9 @@ def test_find_tfl_lights(image_path, json_path=None, fig_num=None):
 
     ax2 = plt.subplot(2, 1, 2)
     ax2.set_title("finished")
-    plt.imshow(image)
-    plt.plot(red_x, red_y, 'rx', markersize=4)
-    plt.plot(green_x, green_y, 'g+', markersize=4)
+    # plt.imshow(image)
+    # plt.plot(red_x, red_y, 'rx', markersize=4)
+    # plt.plot(green_x, green_y, 'g+', markersize=4)
 
 
 def main(argv=None):
