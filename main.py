@@ -25,7 +25,6 @@ except ImportError:
     print("Need to fix the installation")
     raise
 
-need_traffic_light = True
 data_path = "data.bin"
 labels_path = "labels.bin"
 
@@ -228,34 +227,23 @@ def test_find_tfl_lights(image_path, label_path=None, fig_num=None):
     show_image_and_gt(image, objects, fig_num)
 
     red_x, red_y, green_x, green_y = find_tfl_lights(image)
+    tfl_images = []
+    no_tfl_images = []
 
-    global need_traffic_light
-    with open(data_path, "wb") as data_file:
-        with open(labels_path, "wb") as labels_file:
-            for x, y in zip(red_x, red_y):
-                if image_labels[y][x] == 19 and need_traffic_light:
-                        cropped = image[y-40:y+40, x-40:x+40, :]
-                        # plt.imshow(cropped)
-                        # plt.show()
-                        cropped.tofile(data_file)
-                        print(f"{len(cropped)} {len(cropped[0])} {cropped.shape}")
-                        labels_file.write(bytearray(1))
-                        need_traffic_light = False
+    zeroes = np.zeros((len(image)+80, len(image[0])+80, 3))
+    zeroes[40:image.shape[0]+40, 40:image.shape[1]+40] = image
+    padded_image = zeroes.astype(dtype=np.uint8)
 
-                elif not need_traffic_light:
-                        cropped = image[y-40:y+40, x-40:x+40, :]
-                        # plt.imshow(cropped)
-                        # plt.show()
-                        cropped.tofile(data_file)
-                        labels_file.write(bytearray(0))
-                        need_traffic_light = True
-
-    ax2 = plt.subplot(2, 1, 2)
-    ax2.set_title("finished")
-    # plt.imshow(image)
+    for x, y in zip(red_x, red_y):
+        if image_labels[y][x] == 19:
+                cropped = padded_image[y:y+80, x:x+80, :]
+                tfl_images.append(cropped)
+        else:
+                cropped = padded_image[y:y+80, x:x+80, :]
+                no_tfl_images.append(cropped)
     plt.plot(red_x, red_y, 'rx', markersize=4)
     plt.plot(green_x, green_y, 'g+', markersize=4)
-    # plt.show()
+    return tfl_images, no_tfl_images
 
 
 def main(argv=None):

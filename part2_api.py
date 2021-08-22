@@ -43,33 +43,77 @@ def main(argv=None):
     # for filename in os.listdir(args.dir):
     #     flist = glob.glob(os.path.join(args.dir, filename, '*_leftImg8bit.png'))
     #     for image in flist:
-    #         json_fn = image.replace('_leftImg8bit.png', '_gtFine_polygons.json')
+    #         label_fn = image.replace('_leftImg8bit.png', '_gtFine_polygons.json')
     #
-    #         if not os.path.exists(json_fn):
-    #             json_fn = None
-    #         test_find_tfl_lights(image, json_fn)
+    #         if not os.path.exists(label_fn):
+    #             label_fn = None
+    #         test_find_tfl_lights(image, label_fn)
     counter = 1
+
+    tfl_list = []
+    no_tfl_list = []
     flist = glob.glob(os.path.join(default_base, "aachen", '*_leftImg8bit.png'))
     for image in flist:
-        json_fn = image.replace('_leftImg8bit.png', '_gtFine_labelIds.png').replace('leftImg8bit', 'gtFine', 2)
+        label_fn = image.replace('_leftImg8bit.png', '_gtFine_labelIds.png').replace('leftImg8bit', 'gtFine', 2)
         print(counter)
-        if not os.path.exists(json_fn):
-            json_fn = None
-        test_find_tfl_lights(image, json_fn)
+        if not os.path.exists(label_fn):
+            label_fn = None
 
+        if counter == 8:
+            break
 
+        temp_tfl_list, temp_no_tfl_list = test_find_tfl_lights(image, label_fn)
+        tfl_list += temp_tfl_list
+        no_tfl_list += temp_no_tfl_list
         counter += 1
+
+    tfl_list, no_tfl_list = balanced_quantity(tfl_list, no_tfl_list)
+    labels = [1]*len(tfl_list) + [0]*len(no_tfl_list)
+    data = tfl_list + no_tfl_list
+    data = np.array(data, dtype=np.uint8)
+    data.tofile('data.bin')
+    labels = np.array(labels, dtype=np.uint8)
+    labels.tofile('labels.bin')
 
     if len(flist):
         print("You should now see some images, with the ground truth marked on them. Close all to quit.")
     else:
         print("Bad configuration?? Didn't find any picture to show")
-    plt.show(block=True)
 
-loaded_arr = np.fromfile("data.bin",  dtype=np.uint8)
-load_original_arr = loaded_arr.reshape(160, 80, 3)
-plt.imshow(load_original_arr)
-plt.show()
-print("fool")
-# if __name__ == '__main__':
-#     main()
+
+def balanced_quantity(tfl_images, no_tfl_images):
+    count = 0
+    mirrored_tfl = []
+    mirrored_no_tfl = []
+    total_len = (len(tfl_images) + len(no_tfl_images)) * 0.4
+
+    while len(no_tfl_images) + len(mirrored_no_tfl) < total_len and count < len(no_tfl_images):
+        mirrored_no_tfl.append(np.fliplr(no_tfl_images[count]))
+        count += 1
+
+    while len(tfl_images) + len(mirrored_tfl) < total_len and count < len(tfl_images):
+        mirrored_tfl.append(np.fliplr(tfl_images[count]))
+        count += 1
+
+    tfl_images += mirrored_tfl
+    no_tfl_images += mirrored_no_tfl
+
+    while len(tfl_images) < (len(tfl_images) + len(no_tfl_images)) * 0.4:
+        no_tfl_images.pop()
+
+    while len(no_tfl_images) < (len(tfl_images) + len(no_tfl_images)) * 0.4:
+        tfl_images.pop()
+
+    return tfl_images, no_tfl_images
+
+
+# loaded_data = np.fromfile("data.bin",  dtype=np.uint8)
+# loaded_labels = np.fromfile("labels.bin",  dtype=np.uint8)
+# a = loaded_data.reshape(len(loaded_data)//19200, 80, 80, 3)
+# for img in a:
+#     plt.imshow(img)
+#     plt.show()
+
+
+if __name__ == '__main__':
+    main()
