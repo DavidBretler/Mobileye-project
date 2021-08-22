@@ -1,4 +1,5 @@
 import cv2
+from keras.applications.densenet import layers
 
 from main import test_find_tfl_lights
 
@@ -7,7 +8,7 @@ try:
     import json
     import glob
     import argparse
-
+    import keras
     import numpy as np
     from scipy import signal as sg
     from scipy.ndimage.filters import maximum_filter
@@ -38,7 +39,7 @@ def main(argv=None):
     parser.add_argument("-j", "--json", type=str, help="Path to json GT for comparison")
     parser.add_argument('-d', '--dir', type=str, help='Directory to scan images in')
     args = parser.parse_args(argv)
-    default_base = r"C:\Users\naorb\Desktop\Scale-up\projects\mobileye\leftImg8bit\leftImg8bit\train"
+    default_base = r"C:\Users\ddkil\OneDrive\מסמכים\GitHub\mobileye-part-b-davidteam2\gtFine\val"
 
     # for filename in os.listdir(args.dir):
     #     flist = glob.glob(os.path.join(args.dir, filename, '*_leftImg8bit.png'))
@@ -52,7 +53,7 @@ def main(argv=None):
 
     tfl_list = []
     no_tfl_list = []
-    flist = glob.glob(os.path.join(default_base, "aachen", '*_leftImg8bit.png'))
+    flist = glob.glob(os.path.join(default_base, "frankfurt", '*_leftImg8bit.png'))
     for image in flist:
         label_fn = image.replace('_leftImg8bit.png', '_gtFine_labelIds.png').replace('leftImg8bit', 'gtFine', 2)
         print(counter)
@@ -92,7 +93,10 @@ def balanced_quantity(tfl_images, no_tfl_images):
         count += 1
 
     while len(tfl_images) + len(mirrored_tfl) < total_len and count < len(tfl_images):
-        mirrored_tfl.append(np.fliplr(tfl_images[count]))
+        #mirrored_tfl.append(np.fliplr(tfl_images[count]))
+        data_augmentation = keras.Sequential([layers.experimental.preprocessing.RandomRotation(0.2)])
+        augmented_image = data_augmentation(np.fliplr(tfl_images[count]))
+        mirrored_tfl.append(augmented_image)
         count += 1
 
     tfl_images += mirrored_tfl
