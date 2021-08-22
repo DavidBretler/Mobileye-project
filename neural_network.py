@@ -1,6 +1,7 @@
 from os.path import join
 import seaborn as sbn
 import numpy as np
+from keras.layers import MaxPool2D, Dropout
 from matplotlib import pyplot as plt
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Input, Dense, Flatten, Activation, MaxPooling2D, BatchNormalization, Activation, \
@@ -9,7 +10,9 @@ from tensorflow.keras.losses import sparse_categorical_crossentropy
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.models import load_model
 
-def load_tfl_data(data_dir, crop_shape=(80, 80)):
+
+# import  yolo
+def load_tfl_data(data_dir, crop_shape=(81, 81)):
     images = np.memmap(join(data_dir, 'data.bin'), mode='r', dtype=np.uint8).reshape([-1] + list(crop_shape) + [3])
     labels = np.memmap(join(data_dir, 'labels.bin'), mode='r', dtype=np.uint8)
     return {'images': images, 'labels': labels}
@@ -31,6 +34,7 @@ def viz_my_data(images, labels, predictions=None, num=(5, 5), labels2name={0: 'N
         ax.flatten()[i].set_title(title)
     plt.show()
 
+
 # root = './'  #this is the root for your val and train datasets
 data_dir = 'gtFine'
 datasets = {
@@ -40,12 +44,14 @@ datasets = {
 for k, v in datasets.items():
     print('{} :  {} 0/1 split {:.1f} %'.format(k, v['images'].shape, np.mean(v['labels'] == 1) * 100))
 
+
 # viz_my_data(num=(6, 6), **datasets['val'])
 
 
 def tfl_model():
-    input_shape = (80, 80, 3)
-
+    input_shape = (81, 81, 3)
+    # model2 = yolo.make_yolov3_model()
+    # weight_reader = WeightReader('yolov3.weights')
     model = Sequential()
 
     def conv_bn_relu(filters, **conv_kw):
@@ -67,14 +73,35 @@ def tfl_model():
         conv_bn_relu(filters, kernel_size=(3, 3), strides=(2, 2))
 
     conv_bn_relu(32, kernel_size=(3, 3), input_shape=input_shape)
-    spatial_layer(1, 32)
-    spatial_layer(2, 64)
-    spatial_layer(2, 96)
+    # spatial_layer(1, 32)
+    # spatial_layer(2, 64)
+    # spatial_layer(2, 96)
+    #
+    # model.add(Flatten())
+    # dense_bn_relu(96)
+    # model.add(Dense(2, activation='softmax'))
 
+    model = Sequential()
+    model.add(Conv2D(filters=32, kernel_size=(5, 5), activation='relu', input_shape=input_shape))
+    model.add(Conv2D(filters=32, kernel_size=(5, 5), activation='relu'))
+    model.add(MaxPool2D(pool_size=(2, 2)))
+    model.add(Dropout(rate=0.25))
+    model.add(Conv2D(filters=64, kernel_size=(3, 3), activation='relu'))
+    model.add(Conv2D(filters=64, kernel_size=(3, 3), activation='relu'))
+    model.add(MaxPool2D(pool_size=(2, 2)))
+    model.add(Dropout(rate=0.25))
     model.add(Flatten())
-    dense_bn_relu(96)
-    model.add(Dense(2, activation='softmax'))
+    model.add(Dense(256, activation='relu'))
+    model.add(Dropout(rate=0.5))
+    model.add(Dense(43, activation='softmax'))
+
+
+
+
     return model
+
+
+##################main###################
 
 
 m = tfl_model()
@@ -82,28 +109,35 @@ m.summary()
 
 data_dir = 'gtFine'
 datasets = {
-    'val':load_tfl_data(join(data_dir,'val')),
-    'train': load_tfl_data(join(data_dir,'train')),
-    }
-#prepare our model
-m = tfl_model()
-m.compile(optimizer=Adam(),loss =sparse_categorical_crossentropy,metrics=['accuracy'])
-
-train,val = datasets['train'],datasets['val']
-#train it, the model uses the 'train' dataset for learning. We evaluate the "goodness" of the model, by predicting
+    'val': load_tfl_data(join(data_dir, 'val')),
+    'train': load_tfl_data(join(data_dir, 'train')),
+}
+# # prepare our model
+# m = tfl_model()
+m.compile(optimizer=Adam(), loss=sparse_categorical_crossentropy, metrics=['accuracy'])
+#m.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+train, val = datasets['train'], datasets['val']
+# train it, the model uses the 'train' dataset for learning. We evaluate the "goodness" of the model, by predicting
 # the label of the images in the val dataset.
-history=m.fit(train['images'],train['labels'],validation_data=(val['images'],val['labels']),epochs = 2)
+history = m.fit(train['images'], train['labels'], validation_data=(val['images'], val['labels']), epochs=2)
 
+epochs = history.history
+epochs['train_acc'] = epochs['accuracy']
+plt.figure(figsize=(10, 10))
+for k in ['train_acc', 'val_accuracy']:
+    plt.plot(range(len(epochs[k])), epochs[k], label=k)
+
+plt.legend();
+plt.show()
 
 predictions = m.predict(val['images'])
-sbn.distplot(predictions[:,0]);
+sbn.distplot(predictions[:, 0]);
 
 predicted_label = np.argmax(predictions, axis=-1)
-print ('accuracy:', np.mean(predicted_label==val['labels']))
+print('accuracy:', np.mean(predicted_label == val['labels']))
 
+viz_my_data(num=(6, 6), predictions=predictions[:, 1], **val)
 
-viz_my_data(num=(6,6),predictions=predictions[:,1],**val)
-
-m.save("model.h5")
-
-loaded_model = load_model("model.h5")
+# m.save("model.h5")
+#
+# loaded_model = load_model("model.h5")
