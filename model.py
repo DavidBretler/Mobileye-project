@@ -1,3 +1,4 @@
+from keras.layers import MaxPool2D, Dropout
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.layers import Input, Dense, Flatten, Activation, MaxPooling2D, BatchNormalization, Activation
 from tensorflow.keras.layers import Conv2D
@@ -53,13 +54,19 @@ def tfl_model():
             conv_bn_relu(filters, kernel_size=(3, 3))
         conv_bn_relu(filters, kernel_size=(3, 3), strides=(2, 2))
 
-    conv_bn_relu(32, kernel_size=(3, 3), input_shape=input_shape)
-    spatial_layer(1, 32)
+    conv_bn_relu(32, kernel_size=(5, 5), input_shape=input_shape)
+    conv_bn_relu(32, kernel_size=(5, 5))
+    model.add(MaxPooling2D(pool_size=(3, 3)))
+    model.add(Dropout(rate=0.25))
     spatial_layer(2, 64)
-    spatial_layer(2, 96)
+    spatial_layer(1, 128)
+
+    # model.add(MaxPooling2D(pool_size=(3, 3)))
+    # model.add(Dropout(rate=0.25))
 
     model.add(Flatten())
-    dense_bn_relu(242)
+    dense_bn_relu(256)
+    model.add(Dropout(rate=0.25))
     model.add(Dense(2, activation='softmax'))
     return model
 
@@ -98,13 +105,13 @@ else:
     m.compile(optimizer=Adam(), loss=sparse_categorical_crossentropy, metrics=['accuracy'])
     # train it, the model uses the 'train' dataset for learning. We evaluate the "goodness" of the model, by predicting
     # the label of the images in the val dataset.
-    history = m.fit(train['images'], train['labels'], validation_data=(val['images'], val['labels']), epochs=2)
+    history = m.fit(train['images'], train['labels'], validation_data=(val['images'], val['labels']), epochs=4)
     m.summary()
     graph_accuracy(history)
 predict_and_evaluate(val)
 
 # save model
-# m.save("model.h5")
+m.save("model.h5")
 
 
 def save_model(m):
