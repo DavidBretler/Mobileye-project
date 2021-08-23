@@ -1,5 +1,4 @@
 import cv2
-from keras.applications.densenet import layers
 
 from main import test_find_tfl_lights
 
@@ -8,7 +7,7 @@ try:
     import json
     import glob
     import argparse
-    import keras
+
     import numpy as np
     from scipy import signal as sg
     from scipy.ndimage.filters import maximum_filter
@@ -39,47 +38,28 @@ def main(argv=None):
     parser.add_argument("-j", "--json", type=str, help="Path to json GT for comparison")
     parser.add_argument('-d', '--dir', type=str, help='Directory to scan images in')
     args = parser.parse_args(argv)
-    default_base = r"C:\Users\ddkil\OneDrive\מסמכים\GitHub\mobileye-part-b-davidteam2\gtFine\val"
 
-    # for filename in os.listdir(args.dir):
-    #     flist = glob.glob(os.path.join(args.dir, filename, '*_leftImg8bit.png'))
-    #     for image in flist:
-    #         label_fn = image.replace('_leftImg8bit.png', '_gtFine_polygons.json')
-    #
-    #         if not os.path.exists(label_fn):
-    #             label_fn = None
-    #         test_find_tfl_lights(image, label_fn)
-    counter = 1
+    # tfl_list = []
+    # no_tfl_list = []
+    # flist = glob.glob(os.path.join(default_base, "aachen", '*_leftImg8bit.png'))
+    # for image in flist:
+    #     label_fn = image.replace('_leftImg8bit.png', '_gtFine_labelIds.png').replace('leftImg8bit', 'gtFine', 2)
+    #     print(counter)
+    #     if not os.path.exists(label_fn):
+    #         label_fn = None
+    #     temp_tfl_list, temp_no_tfl_list = test_find_tfl_lights(image, label_fn)
+    #     tfl_list += temp_tfl_list
+    #     no_tfl_list += temp_no_tfl_list
+    #     counter += 1
 
-    tfl_list = []
-    no_tfl_list = []
-    flist = glob.glob(os.path.join(default_base, "frankfurt", '*_leftImg8bit.png'))
-    for image in flist:
-        label_fn = image.replace('_leftImg8bit.png', '_gtFine_labelIds.png').replace('leftImg8bit', 'gtFine', 2)
-        print(counter)
-        if not os.path.exists(label_fn):
-            label_fn = None
+    default_base_train = r"C:\Users\naorb\Desktop\Scale-up\projects\mobileye\leftImg8bit\leftImg8bit\train"
+    default_base_val = r"C:\Users\naorb\Desktop\Scale-up\projects\mobileye\leftImg8bit\leftImg8bit\val"
+    data_dir_train = 'gtFine/train'
+    data_dir_val = 'gtFine/val'
 
-        if counter == 8:
-            break
-
-        temp_tfl_list, temp_no_tfl_list = test_find_tfl_lights(image, label_fn)
-        tfl_list += temp_tfl_list
-        no_tfl_list += temp_no_tfl_list
-        counter += 1
-
-    tfl_list, no_tfl_list = balanced_quantity(tfl_list, no_tfl_list)
-    labels = [1]*len(tfl_list) + [0]*len(no_tfl_list)
-    data = tfl_list + no_tfl_list
-    data = np.array(data, dtype=np.uint8)
-    data.tofile('data.bin')
-    labels = np.array(labels, dtype=np.uint8)
-    labels.tofile('labels.bin')
-
-    if len(flist):
-        print("You should now see some images, with the ground truth marked on them. Close all to quit.")
-    else:
-        print("Bad configuration?? Didn't find any picture to show")
+    counter_result = write_dataset(default_base_train, data_dir_train, 20000)
+    write_dataset(default_base_val, data_dir_val, int(counter_result*(1/6)))
+    print("You should now see some images, with the ground truth marked on them. Close all to quit.")
 
 
 def balanced_quantity(tfl_images, no_tfl_images):
@@ -93,10 +73,7 @@ def balanced_quantity(tfl_images, no_tfl_images):
         count += 1
 
     while len(tfl_images) + len(mirrored_tfl) < total_len and count < len(tfl_images):
-        #mirrored_tfl.append(np.fliplr(tfl_images[count]))
-        data_augmentation = keras.Sequential([layers.experimental.preprocessing.RandomRotation(0.2)])
-        augmented_image = data_augmentation(np.fliplr(tfl_images[count]))
-        mirrored_tfl.append(augmented_image)
+        mirrored_tfl.append(np.fliplr(tfl_images[count]))
         count += 1
 
     tfl_images += mirrored_tfl
@@ -111,13 +88,45 @@ def balanced_quantity(tfl_images, no_tfl_images):
     return tfl_images, no_tfl_images
 
 
-# loaded_data = np.fromfile("data.bin",  dtype=np.uint8)
-# loaded_labels = np.fromfile("labels.bin",  dtype=np.uint8)
-# a = loaded_data.reshape(len(loaded_data)//19200, 80, 80, 3)
+def write_dataset(default_base: str, data_dir: str, max_counter: int):
+    counter = 1
+    tfl_list = []
+    no_tfl_list = []
+    for filename in os.listdir(default_base):
+        print(filename)
+        flist = glob.glob(os.path.join(default_base, filename, '*_leftImg8bit.png'))
+        for image in flist:
+            label_fn = image.replace('_leftImg8bit.png', '_gtFine_labelIds.png').replace('leftImg8bit', 'gtFine', 2)
+            print(counter)
+            if not os.path.exists(label_fn):
+                label_fn = None
+            temp_tfl_list, temp_no_tfl_list = test_find_tfl_lights(image, label_fn)
+            tfl_list += temp_tfl_list
+            no_tfl_list += temp_no_tfl_list
+            counter += 1
+
+            if counter > max_counter:
+                break
+        if counter > max_counter:
+            break
+    tfl_list, no_tfl_list = balanced_quantity(tfl_list, no_tfl_list)
+    labels = [1]*len(tfl_list) + [0]*len(no_tfl_list)
+    data = tfl_list + no_tfl_list
+    data = np.array(data, dtype=np.uint8)
+    data.tofile(os.path.join(data_dir, 'data.bin'))
+    labels = np.array(labels, dtype=np.uint8)
+    labels.tofile(os.path.join(data_dir, 'labels.bin'))
+    return counter
+
+
+# loaded_data = np.fromfile("gtFine/val/data.bin",  dtype=np.uint8)
+# loaded_labels = np.fromfile("gtFine/train/labels.bin",  dtype=np.uint8)
+# a = loaded_data.reshape(len(loaded_data)//19683, 81, 81, 3)
+#
 # for img in a:
 #     plt.imshow(img)
 #     plt.show()
 
-
+#
 if __name__ == '__main__':
     main()

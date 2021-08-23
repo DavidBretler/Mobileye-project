@@ -29,93 +29,37 @@ data_path = "data.bin"
 labels_path = "labels.bin"
 
 
-def stam(image):
-
+def highlight_lights(image):
     # plt.imshow(image)
     # plt.show()
+
     # split the image into its BGR components
     mask_red = np.all(image[:,:] <= [180, 235, 235], axis=-1)
     mask_green = np.all(image[:,:] <= [245, 237, 245], axis=-1)
     mask_blue = np.all(image[:,:] <= [245, 245, 190], axis=-1)
 
-    mask_white = np.ma.mask_or(np.all(image[:, :] >= [200, 200, 200], axis=-1), np.all(image[:, :] <= [195, 195, 195], axis=-1))
+    mask_white = np.ma.mask_or(np.all(image[:, :] >= [190, 190, 190], axis=-1), np.all(image[:, :] <= [155, 155, 155], axis=-1))
+
     mask = np.ma.mask_or(np.ma.mask_or(mask_red, mask_green), np.ma.mask_or(mask_blue, mask_white))
     image[mask] = [0, 0, 0]
 
-
-
     image[np.logical_not(mask)] = [255, 255, 255]
 
-    # plt.imshow(image)
-    # plt.show()
-    blurred = cv2.GaussianBlur(image, (17, 17), 0)
-    fixed = cv2.threshold(blurred, 50, 255, cv2.THRESH_BINARY)[1]
+    # blurred = cv2.GaussianBlur(image, (3, 3), 0)
+    # fixed = cv2.threshold(blurred, 26, 255, cv2.THRESH_BINARY)[1]
+    # blurred = cv2.GaussianBlur(fixed, (7, 7), 0)
+    # fixed = cv2.threshold(blurred, 55, 255, cv2.THRESH_BINARY)[1]
+    # blurred = cv2.GaussianBlur(fixed, (19, 19), 0)
+    # fixed = cv2.threshold(blurred, 45, 255, cv2.THRESH_BINARY)[1]
+    # blurred = cv2.GaussianBlur(fixed, (19, 19), 0)
+    # fixed = cv2.threshold(blurred, 45, 255, cv2.THRESH_BINARY)[1]
 
-    # plt.imshow(fixed)
-    # plt.show()
-    # (B, G, R) = cv2.split(image)
-    # # find the maximum pixel intensity values for each
-    # # (x, y)-coordinate,, then set all pixel values less
-    # # than M to zero
-    #
-    # # R = cv2.threshold(R, 90, 255, cv2.THRESH_BINARY)[1]
-    # # G = cv2.threshold(G, 90, 255, cv2.THRESH_BINARY)[1]
-    # # B = cv2.threshold(B, 90, 255, cv2.THRESH_BINARY)[1]
-    #
-    # M = np.maximum(np.maximum(R, G), B)
-    #
-    #
-    #
-    # R[R < M] = 0
-    # G[G < M] = 0
-    # B[B < M] = 0
-    # # merge the channels back together and return the image
-    # final = cv2.merge([B, G, R])
+    blurred = cv2.GaussianBlur(image, (3, 3), 0)
+    fixed = cv2.threshold(blurred, 26, 255, cv2.THRESH_BINARY)[1]
+    blurred = cv2.GaussianBlur(fixed, (17, 17), 0)
+    fixed = cv2.threshold(blurred, 45, 255, cv2.THRESH_BINARY)[1]
 
-    return fixed
-
-
-def red_detection(img):
-    epsilon = 10
-    img_new = img.copy()
-    for j in range(len(img_new)):
-        for i in range(len(img_new[j])):
-            if img[j][i][0] > img[j][i][1] + epsilon and img[j][i][0] > img[j][i][2] + epsilon:
-                img_new[j][i] = [255, 255, 255]
-            else:
-                img_new[j][i] = [0, 0, 0]
-    return img_new
-
-
-def check_red(pixel_colors):
-    epsilon = 10
-    return pixel_colors[0] > pixel_colors[1] + epsilon and pixel_colors[0] > pixel_colors[2] + epsilon
-
-
-# paklocalmax
-def n_max(ary, n):
-    lst = []
-    print(lst)
-    for i in range(len(ary)):
-        for j in range(len(ary[i])):
-            if len(lst) < n:
-                lst.append((ary[i][j], i, j))
-                lst = sorted(lst, key=lambda x: x[0])
-            else:
-                # [[1,4,3,6], [3,4,1,7], [9,1,1]]
-                if ary[i][j] > ary[0][0]:
-                    lst[0] = (ary[i][j], i, j)
-                    lst = sorted(lst, key=lambda x: x[0])
-    return lst
-
-
-def check_red_green(item):
-    if (item[0] > 240) and (item[2] > 240) and (item[1] > 240):
-        return True
-    return False
-    # if (item[2] > 200) and ((item[0] < 130) or (item[1] < 130)):
-    #     return True
-    # return False
+    return fixed[..., :3]
 
 
 def find_tfl_lights(c_image: np.ndarray, cv2=None, **kwargs):
@@ -125,76 +69,50 @@ def find_tfl_lights(c_image: np.ndarray, cv2=None, **kwargs):
     :param kwargs: Whatever config you want to pass in here
     :return: 4-tuple of x_red, y_red, x_green, y_green
     """
-    # n = 10
-    # lst = []
-    #             if len(lst) < n:
-    #                 lst.append((max_filter_image[i][j], i, j))
-    #                 lst = sorted(lst, key=lambda x: x[0])
-    #             else:
-    #                 # [[1,4,3,6], [3,4,1,7], [9,1,1]]
-    #                 if max_filter_image[i][j] > lst[0][0]:
-    #                     lst[0] = (max_filter_image[i][j], i, j)
-    #                     lst = sorted(lst, key=lambda x: x[0])
+    # gray_image = np.dot(c_image[..., :3], [0.2125, 0.7154, 0.0721])
     #
-    # # print(n_max(np.array([[1,4,3,6], [3,4,1,7], [9,1,1]]), 3))
-    # lst_index = [lst[2] for x in lst]
-    # lst_indey = [lst[1] for x in lst]
-    # lst = n_max(lst_index2, 3)
-    # # plt.imshow(x)
-    # plt.show()
-
-
-
-    gray_image = np.dot(c_image[..., :3], [0.2125, 0.7154, 0.0721])
-
 
     # gray_image = c_image.copy()[:,:,0]
     # plt.imshow(gray_image)
     # plt.show()
 
-    kernel = np.array(Image.open('k3.png').convert('L'))
+    kernel = np.array(Image.open('kernel.png').convert('L'))
     kernel = kernel.astype('f')
-    offset = kernel.sum() / (len(kernel[0]) * len(kernel))
+    # offset = kernel.sum() / (len(kernel[0]) * len(kernel))
 
-    for j in range(len(gray_image)):
-        for i in range(len(gray_image[j])):
-            # cou = cou + kernel[j][i]
-            gray_image[j][i] = float(gray_image[j][i]) - offset
+    # for j in range(len(gray_image)):
+    #     for i in range(len(gray_image[j])):
+    #         # cou = cou + kernel[j][i]
+    #         gray_image[j][i] = float(gray_image[j][i]) - offset
+    #
+    # for j in range(len(kernel)):
+    #     for i in range(len(kernel[j])):
+    #         kernel[j][i] = float(kernel[j][i]) - offset
 
-    for j in range(len(kernel)):
-        for i in range(len(kernel[j])):
-            kernel[j][i] = float(kernel[j][i]) - offset
+    highlighted_red_image = highlight_lights(c_image.copy())
+    fixed_image = \
+        sg.convolve(np.dot(highlighted_red_image, [0.2125, 0.7154, 0.0721]), kernel, mode='same', method='auto')
 
-    # fixed_image = sg.convolve(gray_image, kernel, mode='same', method='auto')
-    # mask = stam(c_image.copy())
-    # fixed_image[np.logical_not(mask)] += 900
-    # fixed_image[mask] -= 90
-
-    fixed_image = sg.convolve(np.dot(stam(c_image.copy())[..., :3], [0.2125, 0.7154, 0.0721]), kernel, mode='same', method='auto')
-
-    # plt.imshow(fixed_image)
-    # plt.show()
-
-
-    ax = plt.subplot(2, 1, 1)
-    ax.set_title("Before")
-    plt.imshow(fixed_image)
 
     max_filter_image = scipy.ndimage.maximum_filter(fixed_image, 50)
-    # plt.imshow(max_filter_image)
-    # plt.show()
-    lst_index1 = []
-    lst_index2 = []
+
+    red_index1 = []
+    red_index2 = []
+    green_index1 = []
+    green_index2 = []
 
     for i in range(len(max_filter_image)):
         for j in range(len(max_filter_image[i])):
-            if max_filter_image[i][j] == fixed_image[i][j] and max_filter_image[i][
-                j] > 1500000:  # and check_red(c_image[i][j]):#(np.mean(max_filter_image)*5):
-                lst_index1.append(i)
-                lst_index2.append(j)
+            if max_filter_image[i][j] == fixed_image[i][j] and max_filter_image[i][j] > 1500000:
+                if c_image[i][j][0] > c_image[i][j][1] >= c_image[i][j][2]:
+                    red_index1.append(i)
+                    red_index2.append(j)
+                else:
+                    green_index1.append(i)
+                    green_index2.append(j)
 
     ### USE HELPER FUNCTIONS ###
-    return lst_index2, lst_index1, lst_index2, lst_index1
+    return red_index2, red_index1, green_index2, green_index1
 
 
 ### GIVEN CODE TO TEST YOUR IMPLENTATION AND PLOT THE PICTURES
@@ -211,38 +129,48 @@ def show_image_and_gt(image, objs, fig_num=None):
             plt.legend()
 
 
+def show_find_tfl_lights(image_path):
+    """
+    Run the attention code
+    """
+    image = np.array(Image.open(image_path))
+    red_x, red_y, green_x, green_y = find_tfl_lights(image)
+    plt.plot(red_x, red_y, 'rx', markersize=4)
+    plt.plot(green_x, green_y, 'g+', markersize=4)
+    plt.imshow(image)
+    plt.show()
+
+
 def test_find_tfl_lights(image_path, label_path=None, fig_num=None):
     """
     Run the attention code
     """
-
-
     image = np.array(Image.open(image_path))
-    objects = None
-    if label_path is None:
-        image_labels = None
-    else:
-        image_labels = np.array(Image.open(label_path))
-
-    show_image_and_gt(image, objects, fig_num)
+    image_labels = np.array(Image.open(label_path))
 
     red_x, red_y, green_x, green_y = find_tfl_lights(image)
     tfl_images = []
     no_tfl_images = []
 
-    zeroes = np.zeros((len(image)+80, len(image[0])+80, 3))
-    zeroes[40:image.shape[0]+40, 40:image.shape[1]+40] = image
+    zeroes = np.zeros((len(image)+81, len(image[0])+81, 3))
+    zeroes[41:image.shape[0]+41, 41:image.shape[1]+41] = image
     padded_image = zeroes.astype(dtype=np.uint8)
 
-    for x, y in zip(red_x, red_y):
-        if image_labels[y][x] == 19:
-                cropped = padded_image[y:y+80, x:x+80, :]
+    for x1, y1, x2, y2 in zip(red_x, red_y, green_x, green_y):
+        if image_labels[y1][x1] == 19:
+                cropped = padded_image[y1:y1+81, x1:x1+81, :]
                 tfl_images.append(cropped)
         else:
-                cropped = padded_image[y:y+80, x:x+80, :]
+                cropped = padded_image[y1:y1+81, x1:x1+81, :]
                 no_tfl_images.append(cropped)
-    plt.plot(red_x, red_y, 'rx', markersize=4)
-    plt.plot(green_x, green_y, 'g+', markersize=4)
+
+        if image_labels[y2][x2] == 19:
+                cropped = padded_image[y2:y2+81, x2:x2+81, :]
+                tfl_images.append(cropped)
+        else:
+                cropped = padded_image[y2:y2+81, x2:x2+81, :]
+                no_tfl_images.append(cropped)
+
     return tfl_images, no_tfl_images
 
 
@@ -281,5 +209,5 @@ def main(argv=None):
 
 if __name__ == '__main__':
     # main()
-    test_find_tfl_lights('cologne_000113_000019_leftImg8bit.png', 'cologne_000113_000019_gtFine_labelIds.png')
+    show_find_tfl_lights('aachen_000004_000019_leftImg8bit.png') #, 'cologne_000113_000019_gtFine_labelIds.png')
     plt.show(block=True)
