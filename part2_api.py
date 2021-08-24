@@ -108,6 +108,7 @@ def balanced_quantity(tfl_images, no_tfl_images):
     while len(no_tfl_images) < (len(tfl_images) + len(no_tfl_images)) * 0.4:
         tfl_images.pop()
 
+
     return tfl_images, no_tfl_images
 
 
