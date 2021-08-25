@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 from main import test_find_tfl_lights
 
 try:
@@ -124,7 +124,6 @@ def write_dataset(default_base: str, data_dir: str, max_counter: int):
 #
 if __name__ == '__main__':
     main()
-=======
 try:
     import os
     import json
@@ -287,4 +286,4 @@ def write_dataset_city(default_base: str, data_dir: str, max_counter: int):
 
 if __name__ == '__main__':
     main()
->>>>>>> 9e06529581f3d1e30aa356a7dca92a74e576027d
+
