@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-import cv2
-import scipy
 
 try:
     import os
@@ -87,8 +84,6 @@ def find_tfl_lights(c_image: np.ndarray, cv2=None, **kwargs):
 
 
 def show_image_and_gt(image, objs, fig_num=None):
-    # plt.figure(fig_num).clf()
-    # plt.imshow(image)
     labels = set()
     if objs is not None:
         for o in objs:
@@ -181,7 +176,7 @@ if __name__ == '__main__':
     # main()
     show_find_tfl_lights('gallery/img2.png')  # , 'cologne_000113_000019_gtFine_labelIds.png')
     plt.show(block=True)
-=======
+
 try:
     import os
     import json
@@ -335,4 +330,4 @@ if __name__ == '__main__':
     """
     show_find_tfl_lights('gallery/img2.png')  # , 'cologne_000113_000019_gtFine_labelIds.png')
     plt.show(block=True)
->>>>>>> 9e06529581f3d1e30aa356a7dca92a74e576027d
+

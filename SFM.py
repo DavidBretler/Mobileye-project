@@ -43,6 +43,7 @@ def calc_3D_data(norm_prev_pts, norm_curr_pts, R, foe, tZ):
         pts_3D.append((P[0], P[1], P[2]))
         corresponding_ind.append(corresponding_p_ind)
     return corresponding_ind, np.array(pts_3D), validVec
+
 def normalize(pts, focal, pp):
     pts_normalize = []
     for pts_x, pts_y in pts:
