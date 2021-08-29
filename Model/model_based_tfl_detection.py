@@ -24,16 +24,22 @@ def highlight_lights(image: np.ndarray):
     :param image: The image itself as np.uint8, shape of (H, W, 3)
     :return: 2D black-white image with black background and white spots which are the tfl that detected
     """
-    mask_red = np.all(image[:, :] <= [180, 235, 235], axis=-1)
-    mask_green = np.all(image[:, :] <= [245, 235, 245], axis=-1)
-    mask_blue = np.all(image[:, :] <= [245, 245, 190], axis=-1)
+    cropped_image = image.copy()
+    cropped_image[0:60, :] = [[0, 0, 0]] * len(cropped_image[0])
+    cropped_image[-61:-1, :] = [[0, 0, 0]] * len(cropped_image[0])
+    cropped_image[:, 0:60] = [[[0, 0, 0]] * 60] * len(cropped_image)
+    cropped_image[:, -61:-1] = [[[0, 0, 0]] * 60] * len(cropped_image)
 
-    mask_white = np.ma.mask_or(np.all(image[:, :] >= [190, 190, 190], axis=-1),
-                               np.all(image[:, :] <= [155, 155, 155], axis=-1))
+    mask_red = np.all(cropped_image[:, :] <= [180, 235, 235], axis=-1)
+    mask_green = np.all(cropped_image[:, :] <= [245, 235, 245], axis=-1)
+    mask_blue = np.all(cropped_image[:, :] <= [245, 245, 190], axis=-1)
+
+    mask_white = np.all(cropped_image[:, :] <= [155, 155, 155], axis=-1)
 
     mask = np.ma.mask_or(np.ma.mask_or(mask_red, mask_green), np.ma.mask_or(mask_blue, mask_white))
-    image[mask] = [0, 0, 0]
 
+
+    image[mask] = [0, 0, 0]
     image[np.logical_not(mask)] = [255, 255, 255]
 
     # a better/worse way to detect the lights (get more tfl results = get more noises)
@@ -46,14 +52,7 @@ def highlight_lights(image: np.ndarray):
     blurred = cv2.GaussianBlur(fixed, (19, 19), 0)
     fixed = cv2.threshold(blurred, 45, 255, cv2.THRESH_BINARY)[1]
 
-    # another way to detect the lights (get less tfl results = get less noises)
-    # blurred = cv2.GaussianBlur(image, (3, 3), 0)
-    # fixed = cv2.threshold(blurred, 26, 255, cv2.THRESH_BINARY)[1]
-    # blurred = cv2.GaussianBlur(fixed, (17, 17), 0)
-    # fixed = cv2.threshold(blurred, 45, 255, cv2.THRESH_BINARY)[1]
-
     return fixed[..., :3]  # return result 2D
-
 
 def find_tfl_lights(c_image: np.ndarray):
     """
@@ -78,7 +77,8 @@ def find_tfl_lights(c_image: np.ndarray):
     for i in range(len(max_filter_image)):
         for j in range(len(max_filter_image[i])):
             if max_filter_image[i][j] == fixed_image[i][j] and max_filter_image[i][j] > 1500000:
-                if c_image[i][j][0] > c_image[i][j][1] >= c_image[i][j][2]:
+                if c_image[i][j][0] > c_image[i][j][1] >= c_image[i][j][2] \
+                        or not c_image[i][j][2] - 20 > c_image[i][j][0]:
                     red_index.append((j, i))
                 # red_index2.append(j)
                 else:
@@ -104,8 +104,8 @@ def show_find_tfl_lights(image_path):
     green_y = [x[1] for x in green]
 
     plt.imshow(image)
-    plt.plot( red_x,red_y ,'rx', markersize=4)
-    plt.plot( green_x,green_y, 'g+', markersize=4)
+    plt.plot(red_x,red_y ,'rx', markersize=4)
+    plt.plot(green_x,green_y, 'g+', markersize=4)
 
     plt.show()
     print("You should now see some images, with the ground truth marked on them. Close all to quit.")

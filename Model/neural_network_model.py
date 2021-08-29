@@ -102,6 +102,46 @@ def graph_accuracy(history):
     plt.show()
 
 
+def find_tfl(model, image,red_lights,green_lights):
+    # # padding with 40 pixels
+       zeroes = np.zeros((len(image) + 81, len(image[0]) + 81, 3))
+       zeroes[41:image.shape[0] + 41, 41:image.shape[1] + 41] = image
+       padded_image = zeroes.astype(dtype=np.uint8)
+
+       cropped_red_images=[]
+       cropped_green_images=[]
+
+       for red_x,red_y in red_lights:
+                   cropped = padded_image[red_y:red_y + 81, red_x:red_x + 81,:]
+                   cropped_red_images.append(cropped.tolist())
+
+       for green_x,green_y in green_lights:
+                   cropped = padded_image[green_y:green_y + 81, green_x:green_x + 81,:]
+                   cropped_green_images.append(cropped.tolist())
+
+       predicted_red_label, predicted_green_label = predict(model,cropped_red_images,cropped_green_images)
+
+       red_lights = [red_lights[i] for i in range(len(red_lights)) if predicted_red_label[i]]
+       green_lights = [green_lights[i] for i in range(len(green_lights)) if predicted_green_label[i]]
+
+       return red_lights,green_lights
+
+
+def predict(model,cropped_red_images,cropped_green_images):
+    predicted_red_label=[]
+    predicted_green_label=[]
+
+    if cropped_red_images:
+        predictions_red = model.predict(cropped_red_images)
+        predicted_red_label = np.argmax(predictions_red, axis=-1)
+
+    if cropped_green_images:
+        predictions_green = model.predict(cropped_green_images)
+        predicted_green_label = np.argmax(predictions_green, axis=-1)
+
+    return predicted_red_label,predicted_green_label
+
+
 def predict_and_evaluate(model, val):
     """
     activate the images as input for the Model,
@@ -164,3 +204,4 @@ def init():
 
 
 init()
+

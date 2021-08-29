@@ -25,8 +25,11 @@ def main():
     default_base_val = r"C:\Users\ddkil\OneDrive\מסמכים\GitHub\mobileye-part-b-davidteam2\Data\gtFine\val"
     data_dir_train = r'gtFine\train'
     data_dir_val = r'gtFine\val'
-    counter_result = write_dataset(default_base_train, data_dir_train, 2)
-    write_dataset(default_base_val, data_dir_val, int(counter_result*(1/6)))
+    if not os.path.exists(r"../Data/gtFine/train/data.bin") and \
+            not os.path.exists(r"../Data/gtFine/val/data.bin"):
+        print("crate files")
+        counter_result = write_dataset(default_base_train, data_dir_train, 2)
+        write_dataset(default_base_val, data_dir_val, int(counter_result*(1/6)))
     print(f"You should now see the two binary files created in {data_dir_train} and "
           f"{data_dir_val} (data.bin and labels.bin).")
 

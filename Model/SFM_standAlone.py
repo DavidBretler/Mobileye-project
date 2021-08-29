@@ -48,7 +48,7 @@ class FrameContainer(object):
 # read data and run
 # curr_frame_id = 29
 # prev_frame_id = 28
-#for prev_frame_id in range(24, 29, 2):
+for prev_frame_id in range(24, 29, 2):
 
     curr_frame_id = prev_frame_id + 1
     pkl_path = r'C:\Users\ddkil\OneDrive\מסמכים\GitHub\mobileye-part-b-davidteam2\dusseldorf_000049.pkl'
@@ -67,4 +67,5 @@ class FrameContainer(object):
         EM = np.dot(data['egomotion_' + str(i) + '-' + str(i + 1)], EM)
     curr_container.EM = EM
     curr_container = SFM.calc_TFL_dist(prev_container, curr_container, focal, pp)
-    visualize(prev_container, curr_container, focal, pp)
+
+    #visualize(prev_container, curr_container, focal, pp)
