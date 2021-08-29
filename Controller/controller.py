@@ -1,7 +1,4 @@
 import pickle
-import random
-
-from PIL import Image
 
 from Model import SFM
 from View import view
