@@ -128,6 +128,13 @@ def find_tfl(model, image,red_lights,green_lights):
 
 
 def predict(model,cropped_red_images,cropped_green_images):
+    '''
+
+    :param model:
+    :param cropped_red_images:
+    :param cropped_green_images:
+    :return: predicted result of tfl points
+    '''
     predicted_red_label=[]
     predicted_green_label=[]
 

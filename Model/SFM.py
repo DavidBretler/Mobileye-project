@@ -79,14 +79,14 @@ def decompose(EM):
 
 
 def rotate(pts, R):
+    # rotate the points - pts using R
     norm_rotate = []
     for tfl in pts:
         p_vec = np.array([tfl[0], tfl[1], 1])
         result = R.dot(p_vec)
-        #result = np.matmul(R,p_vec)
         norm_rotate.append([result[0] / result[2], result[1] / result[2]])
     return np.array(norm_rotate)
-    # rotate the points - pts using R
+
 
 def find_corresponding_points(p, norm_pts_rot, foe):
     m = (foe[1] - p[1]) / (foe[0] - p[0])

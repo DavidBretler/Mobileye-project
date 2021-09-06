@@ -1,8 +1,5 @@
-import numpy as np
-from matplotlib import pyplot as plt
-import matplotlib._png as png
 
-from Model import SFM
+from matplotlib import pyplot as plt
 
 PATH2 = r'C:\Users\ddkil\OneDrive\מסמכים\GitHub\mobileye-part-b-davidteam2'
 

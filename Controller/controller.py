@@ -38,70 +38,30 @@ class TFL_manager:
 
     def run(self, prev_container, cur_container, EM, neural_network_model):
         self.Ego_motion = EM
-
-        # part one
-        # red_lights, green_lights = find_tfl_lights(np.array(Image.open(PATH2 + '\\' + curr_frame)))
+        # part one find lights in image
         red_lights, green_lights = find_tfl_lights(np.array(cur_container.img))
 
-        # print(len(lst_lights))
-
-        # part two use neural network
-        # img_array = np.array(Image.open(PATH2 + '\\' + curr_frame))
+        # part two find traffic light from the light list
         red_lights, green_lights = Model.neural_network_model.find_tfl(model=neural_network_model,
                                                                        image=np.array(cur_container.img)
                                                                        , red_lights=red_lights,
                                                                        green_lights=green_lights)
-        # red_lights, green_lights = Model.neural_network_model.predict_and_evaluate \
-        #     (neural_network_model, np.array(Image.open(PATH2 + '\\' + curr_frame)))
-        # print(len(lst_tfl))
         cur_container.traffic_light_red = red_lights
         cur_container.traffic_light_green = green_lights
-        cur_container.traffic_light=red_lights+green_lights
+        cur_container.traffic_light = red_lights + green_lights
 
-        if  cur_container.first_frame:
+        if cur_container.first_frame:
             self.green_lights = green_lights
             self.red_lights = red_lights
             return cur_container
 
-        # part three
-        # lst_dist = self.calc_dist(red_lights, green_lights, '',
-        #                           TFL_manager.lst_red_lights, TFL_manager.lst_green_lights)
+        # part three calc dist to all the traffic light
         curr_container = SFM.calc_TFL_dist(prev_container, cur_container, self.focal, self.pp)
 
         self.green_lights = green_lights
         self.red_lights = red_lights
 
         return curr_container
-
-    # stab part one
-    # def find_lights(self, cur_frame):
-    #     return find_tfl_lights(np.array(cur_frame))
-    #     # res = []
-    #     # res_color = []
-    #     # for i in range(10):
-    #     #     res.append([random.randint(1, 1000), random.randint(100, 1000)])
-    #     #     res_color.append('RED')
-    #     # return res, res_color
-
-    # stab part two
-    # def find_TFL(self, cur_frame, red_lights, green_lights):
-    #     res_tfl = []
-    #     res_color_tfl = []
-    #     for i in range(len(red_lights)):
-    #         if i % 3 == 0:
-    #             res_tfl.append(red_lights[i])
-    #     for i in range(len(green_lights)):
-    #         if i % 3 == 0:
-    #             res_color_tfl.append(green_lights[i])
-    #     return red_lights, green_lights
-
-    # stab part three
-    # def calc_dist(self, red_lights, green_lights, lst_tfl_cur,
-    #               lst_colors_cur, lst_tfl_prev):
-    #     res_dist = []
-    #     for i in range(len(red_lights) + len(green_lights)):
-    #         res_dist.append((i * 25.6 + i * i, i * 25.6 + i))
-    #     return res_dist
 
 
 def init():
@@ -133,9 +93,9 @@ def run(tfl_manager, frame_list, data, frame_id, neural_network_model):
                 for j in range(frame_id, frame_id + 1):
                     EM = np.dot(data['egomotion_' + str(j - 1) + '-' + str(j)], EM)
             prev_container = FrameContainer(PATH2 + '\\' + frame_list[i - 1])
-            prev_container.traffic_light_red = list_tfl[i-1][0]
-            prev_container.traffic_light_green = list_tfl[i-1][1]
-            prev_container.traffic_light=list_tfl[i-1][0]+list_tfl[i-1][1]
+            prev_container.traffic_light_red = list_tfl[i - 1][0]
+            prev_container.traffic_light_green = list_tfl[i - 1][1]
+            prev_container.traffic_light = list_tfl[i - 1][0] + list_tfl[i - 1][1]
 
         else:
             prev_container = FrameContainer(PATH2 + '\\' + frame_list[i])
@@ -145,6 +105,7 @@ def run(tfl_manager, frame_list, data, frame_id, neural_network_model):
         cur_container = tfl_manager.run(prev_container, cur_container, EM, neural_network_model)
 
         if not cur_container.first_frame:
+            # visualize the result of all the parts
             view.visualize(cur_container, frame_id)
 
         frame_id += 1
@@ -166,4 +127,5 @@ def get_data(pkl_path):
     return data
 
 
-init()
+if __name__ == '__main__':
+    init()
